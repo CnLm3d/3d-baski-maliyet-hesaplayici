@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Baskı Profesyonel Maliyet ve Teklif Hesaplayıcı</title>
+  
+  <!-- Fontlar & İkonlar -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Yerel Kütüphaneler (Offline Çalışır) -->
+  <script src="lib/tailwind.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {}
+      }
+    };
+  </script>
+  <script src="lib/three.min.js"></script>
+  <script src="lib/OrbitControls.js"></script>
+  <script src="lib/STLLoader.js"></script>
+  <script src="lib/jszip.min.js"></script>
+
+  <!-- Stil Dosyası -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Üst Bar / Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+          3D Baskı Maliyet & Teklif Robotu
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">Atölye Sürümü</span>
+        </h1>
+        <p class="text-xs text-slate-400">Filenta PLA & Elegoo Reçine • 8x Yazıcı Filosu • Kira & Amortisman Entegre</p>
+      </div>
+    </div>
+
+    <!-- Menü Sekmeleri -->
+    <nav class="flex items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800 flex-wrap">
+      <button class="nav-btn active" data-tab="tab-calculator">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        <span data-i18n="navCalc">Maliyet Hesapla</span>
+      </button>
+      <button class="nav-btn" data-tab="tab-fleet">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        <span data-i18n="navFleet">Makine Parkı (8 Yazıcı)</span>
+      </button>
+      <button class="nav-btn" data-tab="tab-workshop">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span data-i18n="navWorkshop">Firma, Atölye & Gider Ayarları</span>
+      </button>
+      <button class="nav-btn" data-tab="tab-quote">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span data-i18n="navQuote">Müşteri Teklifi (PDF/Fiş)</span>
+      </button>
+      <button class="nav-btn" data-tab="tab-reports">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span data-i18n="navReports">Detaylı Maliyet Raporları & Arşiv (Patron)</span>
+      </button>
+    </nav>
+
+    <!-- Hızlı Durum, Dil Seçici & Kayıt Bildirimi -->
+    <div class="flex items-center gap-3">
+      <!-- Dil Değiştirici -->
+      <div class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
+        <button id="lang-btn-tr" class="px-2 py-1 rounded font-bold transition-colors bg-indigo-600 text-white">TR</button>
+        <button id="lang-btn-en" class="px-2 py-1 rounded font-bold transition-colors text-slate-400 hover:text-white">EN</button>
+      </div>
+
+      <span id="save-status" class="text-xs text-emerald-400 flex items-center gap-1.5 opacity-90">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="txt-data-saved">Veriler Kaydedildi</span>
+      </span>
+      <button id="btn-reset-defaults" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700">
+        <span id="txt-factory-reset">Fabrika Ayarları</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Ana İçerik Konteyneri -->
+  <main class="flex-1 p-6 max-w-[1720px] w-full mx-auto">
+    
+    <!-- ========================================== -->
+    <!-- SEKME 1: MALİYET HESAPLAYICI (ANA EKRAN) -->
+    <!-- ========================================== -->
+    <div id="tab-calculator" class="tab-pane active">
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+        <!-- SOL SÜTUN: Dosya Yükleme & 3D Görüntüleyici (5 Kolon) -->
+        <div class="xl:col-span-5 flex flex-col gap-6">
+          
+          <!-- Dosya Yükleme Alanı -->
+          <div class="card p-5">
+            <h2 class="text-base font-semibold text-white flex items-center justify-between mb-3">
+              <span class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <span id="txt-load-model-title">Model Yükle (.STL, .3MF, .GCODE)</span>
+              </span>
+              <span class="text-xs text-slate-400 font-normal" id="txt-drag-drop">Sürükle & Bırak</span>
+            </h2>
+
+            <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500/70 rounded-2xl p-6 text-center cursor-pointer transition-all duration-200 bg-slate-900/40 hover:bg-indigo-950/20 group">
+              <input type="file" id="file-input" class="hidden" accept=".stl,.3mf,.gcode">
+              
+              <div class="w-12 h-12 mx-auto rounded-xl bg-slate-800/80 group-hover:bg-indigo-600/20 flex items-center justify-center text-slate-400 group-hover:text-indigo-400 transition-colors mb-3">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <p class="text-sm font-medium text-slate-200 mb-1">
+                <span class="text-indigo-400 underline decoration-indigo-500/40 underline-offset-4" id="txt-choose-file">Dosya seçin</span> <span id="txt-or-drag">veya buraya sürükleyin</span>
+              </p>
+              <p class="text-xs text-slate-500">STL, 3MF (Ham CAD veya Renkli) veya Dilimlenmiş G-Code</p>
+            </div>
+
+            <!-- Yüklenen Dosya Bilgisi -->
+            <div id="file-info-bar" class="mt-4 hidden p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between">
+              <div class="flex items-center gap-3 overflow-hidden">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0">
+                  <span id="file-badge" class="text-xs font-bold font-mono">STL</span>
+                </div>
+                <div class="truncate">
+                  <p id="file-name" class="text-xs font-medium text-slate-200 truncate">ornek_model.stl</p>
+                  <p id="file-size" class="text-[11px] text-slate-400">0 KB</p>
+                </div>
+              </div>
+              <button id="btn-remove-file" class="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-700/60 transition-colors" title="Dosyayı Kaldır">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <!-- 3MF CİHAZ UYARLAMA VE DÖNÜŞTÜRÜCÜ KARTI -->
+            <div id="adapter-panel-3mf" class="mt-4 hidden p-4 rounded-xl bg-gradient-to-r from-violet-950/40 via-indigo-950/30 to-slate-900 border border-indigo-500/40">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                  3MF Cihaz Uyarlayıcı & Dönüştürücü
+                </span>
+                <span id="adapter-source-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">Bambu/Prusa Kaynaklı</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mb-3">Bu 3MF dosyası farklı bir makine profili içeriyor. Dosyayı atölyenizdeki mevcut cihazlara ve Filenta PLA ayarlarına uyarlayıp indirebilirsiniz.</p>
+              
+              <div class="grid grid-cols-1 gap-2.5 mb-3">
+                <div>
+                  <label class="text-[11px] font-semibold text-slate-300 block mb-1">Hedef Cihazınızı Seçin:</label>
+                  <select id="adapter-target-printer" class="form-select text-xs py-1.5">
+                    <!-- JS tarafından doldurulacak -->
+                  </select>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-slate-300 bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="adapter-apply-filenta" checked class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5">
+                    Filenta PLA Isı/Hız Profilini Uygula (215°C / 60°C)
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="adapter-recenter-bed" checked class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5">
+                    Tablayı Ortala
+                  </label>
+                </div>
+              </div>
+
+              <button id="btn-export-adapted-3mf" class="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-600/30 flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Uyarlanmış 3MF Olarak İndir (.3mf)
+              </button>
+            </div>
+          </div>
+
+          <!-- 3D Önizleme Portu -->
+          <div class="card p-5 flex-1 flex flex-col min-h-[460px]">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span id="txt-viewer-title">3D Görselleştirici & Tabla</span>
+              </h3>
+              <div class="flex items-center gap-1.5">
+                <button id="btn-toggle-wireframe" class="btn-xs" title="Tel Kafes Görünümü">Kafes</button>
+                <button id="btn-reset-camera" class="btn-xs" title="Kamerayı Sıfırla">Ortala</button>
+              </div>
+            </div>
+
+            <!-- MODEL YÖNLENDİRME & DÖNDÜRME ARAÇ ÇUBUĞU (ORIENTATION) -->
+            <div id="orientation-toolbar" class="mb-2.5 p-2 rounded-xl bg-slate-900/95 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span id="txt-orient-title">Yönlendirme:</span>
+              </span>
+              <div class="flex items-center gap-1">
+                <button id="btn-rot-x" class="orient-btn" title="Kırmızı X Ekseninde 90° Çevir">X +90°</button>
+                <button id="btn-rot-y" class="orient-btn" title="Yeşil Y Ekseninde 90° Çevir">Y +90°</button>
+                <button id="btn-rot-z" class="orient-btn" title="Mavi Z Ekseninde 90° Çevir">Z +90°</button>
+                <button id="btn-lay-flat" class="orient-btn text-cyan-300 border-cyan-800/60 hover:border-cyan-500" title="Tablaya Tam Oturt (En Düşük Yüzeye Hizala)">
+                  <svg class="w-3 h-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                  <span id="txt-snap-bed">Tablaya Oturt</span>
+                </button>
+                <button id="btn-recenter" class="orient-btn text-slate-400 hover:text-white" title="Tablanın Merkezine Al">
+                  <span id="txt-center-model">Merkezle</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- MOD SEÇİCİ: DESTEK BOYAMA vs ÇOK RENKLİ BOYAMA -->
+            <div class="flex items-center justify-between mb-2 px-1">
+              <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[11px]">
+                <button id="tab-tool-support" class="px-2.5 py-1 rounded font-semibold transition-colors bg-indigo-600 text-white">
+                  Destek Boyama
+                </button>
+                <button id="tab-tool-color" class="px-2.5 py-1 rounded font-semibold transition-colors text-slate-400 hover:text-white flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-gradient-to-r from-red-500 via-emerald-500 to-blue-500"></span>
+                  Çok Renkli Boyama
+                </button>
+              </div>
+              <span id="active-tool-hint" class="text-[10px] text-slate-400 font-mono">İnceleme Modu</span>
+            </div>
+
+            <!-- PANEL A: DESTEK BOYAMA VE SARKMA ANALİZİ -->
+            <div id="panel-support-tools" class="mb-3 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <!-- Mod Butonları -->
+              <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                <button id="tool-mode-view" class="tool-btn active" title="Modeli İncele / Döndür">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                  İncele
+                </button>
+                <button id="tool-mode-enforce" class="tool-btn" title="Destek Ekle / Zorunlu Destek Yüzeyi Boya">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                  Destek Ekle
+                </button>
+                <button id="tool-mode-block" class="tool-btn" title="Destek Engelle / Yasaklı Bölge Boya">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                  Engelle
+                </button>
+                <button id="tool-mode-eraser" class="tool-btn" title="Boyamayı Sil">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Silgi
+                </button>
+              </div>
+
+              <!-- Fırça Boyutu & Otomatik Buton -->
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                  <span class="text-[10px]">Çap:</span>
+                  <input type="range" id="brush-size-slider" min="3" max="30" value="10" class="w-16 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                  <span id="brush-size-label" class="font-mono text-[10px] w-6 text-slate-300">10mm</span>
+                </div>
+                <button id="btn-auto-overhang" class="btn-xs flex items-center gap-1 bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30" title="45° ve Üzeri Sarkmaları Otomatik Boya">
+                  <svg class="w-3 h-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  Oto Sarkma (&gt;45°)
+                </button>
+                <button id="btn-clear-paint" class="btn-xs text-slate-400 hover:text-white" title="Tüm Boyamayı Sıfırla">Temizle</button>
+              </div>
+            </div>
+
+            <!-- PANEL B: ÇOK RENKLİ MODEL RENKLENDİRME PALETİ -->
+            <div id="panel-color-tools" class="mb-3 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hidden space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                    <button id="tool-mode-color-view" class="tool-btn active" title="Modeli İncele / Döndür">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                      <span data-i18n="inspect">İncele</span>
+                    </button>
+                    <button id="tool-mode-color-paint" class="tool-btn" title="Modeli Seçilen Filament Rengiyle Boya">
+                      <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4 4 4 0 014-4c.73 0 1.41.2 2 .55V5a2 2 0 012-2h7a2 2 0 012 2v14a2 2 0 01-2 2H7z"/></svg>
+                      <span data-i18n="paintBrush" id="txt-paint-brush">Fırça ile Boya</span>
+                    </button>
+                  </div>
+
+                  <!-- Renk Seçim Paleti -->
+                  <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                    <button class="color-swatch-btn active" data-color="#6366f1" style="background-color: #6366f1;" title="Filament 1 (İndigo / Ana Renk)"></button>
+                    <button class="color-swatch-btn" data-color="#f8fafc" style="background-color: #f8fafc;" title="Filament 2 (Beyaz)"></button>
+                    <button class="color-swatch-btn" data-color="#0f172a" style="background-color: #0f172a; border-color: #64748b;" title="Filament 3 (Siyah)"></button>
+                    <button class="color-swatch-btn" data-color="#ef4444" style="background-color: #ef4444;" title="Filament 4 (Kırmızı)"></button>
+                    <button class="color-swatch-btn" data-color="#10b981" style="background-color: #10b981;" title="Filament 5 (Yeşil)"></button>
+                    <button class="color-swatch-btn" data-color="#f59e0b" style="background-color: #f59e0b;" title="Filament 6 (Sarı)"></button>
+                    <input type="color" id="custom-color-picker" value="#06b6d4" class="w-6 h-6 rounded-full border-0 cursor-pointer bg-transparent" title="Özel Renk Seç">
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                    <span class="text-[10px]">Çap:</span>
+                    <input type="range" id="color-brush-size-slider" min="3" max="30" value="10" class="w-16 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    <span id="color-brush-size-label" class="font-mono text-[10px] w-6 text-slate-300">10mm</span>
+                  </div>
+                  <span class="text-[11px] text-slate-400">Renkler: <b id="model-color-count" class="text-indigo-300 font-mono">1 Renk</b></span>
+                  <button id="btn-reset-model-colors" class="btn-xs text-slate-400 hover:text-white" title="Modeli Tek Renke Sıfırla" data-i18n="resetModelColors">Sıfırla</button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] text-indigo-300/80 bg-indigo-950/30 px-2 py-1 rounded-lg border border-indigo-900/40">
+                <span class="flex items-center gap-1">
+                  <span>💡</span>
+                  <span data-i18n="colorOrbitHint">Fırça açıkken Sağ Tık basılı tutarak modeli 3D döndürebilir, tekerlek ile yakınlaşabilirsiniz.</span>
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono">Sağ Tık = Çevir</span>
+              </div>
+            </div>
+
+            <div id="viewer-container" class="w-full flex-1 min-h-[300px] bg-slate-950/80 rounded-xl border border-slate-800 relative overflow-hidden flex items-center justify-center">
+              <div id="viewer-placeholder" class="text-center p-6 text-slate-500">
+                <svg class="w-12 h-12 mx-auto mb-2 opacity-30 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <p class="text-xs" data-i18n="viewerPlaceholder">Model yüklendiğinde 3D etkileşimli önizleme burada belirecektir.</p>
+                <p class="text-[11px] text-slate-600 mt-1" data-i18n="viewerControlHint">Döndürmek için sol/sağ tık • Yakınlaşmak için tekerlek</p>
+              </div>
+              <canvas id="three-canvas" class="w-full h-full hidden"></canvas>
+              
+              <!-- Tabla Sığma Uyarısı Rozeti -->
+              <div id="bed-fit-badge" class="absolute bottom-3 left-3 hidden px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur border">
+                Tablaya Sığıyor
+              </div>
+            </div>
+
+            <!-- İNTERAKTİF MODEL BOYUTLANDIRMA & ÖLÇEKLEME (RESIZE) PANELİ -->
+            <div id="model-scale-panel" class="mt-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5 hidden">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-white flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                  <span data-i18n="resizeTitle">Model Boyutları & Ölçekleme (Resize)</span>
+                </span>
+                <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300">
+                  <input type="checkbox" id="scale-uniform-lock" checked class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+                  <span data-i18n="lockAspect">Orantıyı Koru</span>
+                  <span class="text-xs text-indigo-400">🔒</span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-4 gap-2">
+                <div>
+                  <label class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">X (Genişlik)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="input-dim-x" class="form-input text-right font-mono text-xs py-1 px-1.5" value="0.0" step="0.5" min="1">
+                    <span class="text-[10px] text-slate-400">mm</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">Y (Derinlik)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="input-dim-y" class="form-input text-right font-mono text-xs py-1 px-1.5" value="0.0" step="0.5" min="1">
+                    <span class="text-[10px] text-slate-400">mm</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">Z (Yükseklik)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="input-dim-z" class="form-input text-right font-mono text-xs py-1 px-1.5" value="0.0" step="0.5" min="1">
+                    <span class="text-[10px] text-slate-400">mm</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">Ölçek (%)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="input-scale-percent" class="form-input text-right font-mono text-xs py-1 px-1.5 font-bold text-indigo-400" value="100" step="5" min="5" max="1000">
+                    <span class="text-[10px] text-slate-400">%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px]">
+                <div class="flex items-center gap-1">
+                  <span class="text-slate-500 text-[10px]">Hızlı:</span>
+                  <button class="btn-quick-scale px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px]" data-pct="50">%50</button>
+                  <button class="btn-quick-scale px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px]" data-pct="75">%75</button>
+                  <button class="btn-quick-scale px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px]" data-pct="100">%100</button>
+                  <button class="btn-quick-scale px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px]" data-pct="125">%125</button>
+                  <button class="btn-quick-scale px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px]" data-pct="150">%150</button>
+                  <button class="btn-quick-scale px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px]" data-pct="200">%200</button>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button id="btn-reset-dimensions" class="btn-xs text-slate-400 hover:text-white" data-i18n="resetSize">Orijinal Boyut</button>
+                  <button id="btn-apply-dimensions" class="btn-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold" data-i18n="applySize">Uygula</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- G-CODE KATMAN VE TAKIM YOLU KONTROL PANELİ -->
+            <div id="gcode-control-panel" class="mt-3 p-3 rounded-xl bg-slate-900/95 border border-cyan-500/40 space-y-2.5 hidden">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-cyan-300 flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                  <span>G-Code Katman Simülatörü</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">OrcaSlicer Toolpaths</span>
+                </span>
+                <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300">
+                  <input type="checkbox" id="gcode-show-travel" class="rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-0">
+                  <span>Seyahatleri Göster</span>
+                </label>
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-[11px]">
+                  <span class="text-slate-400">Katman: <b id="gcode-current-layer-label" class="text-cyan-400 font-mono">1 / 1</b></span>
+                  <span class="text-slate-400 font-mono text-[10px]" id="gcode-layer-height-label">Z: 0.20 mm</span>
+                </div>
+                <input type="range" id="gcode-layer-slider" min="1" max="1" value="1" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800/80 text-[10px] text-slate-400 font-mono text-center">
+                <div>Yollar: <b id="gcode-lines-count" class="text-slate-200">0</b></div>
+                <div>Süre: <b id="gcode-time-est" class="text-slate-200">0 dk</b></div>
+                <div>Filament: <b id="gcode-weight-est" class="text-slate-200">0.0g</b></div>
+              </div>
+            </div>
+
+            <!-- Model Geometri İstatistikleri -->
+            <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-800 text-center">
+              <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800/80">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-mono block" data-i18n="statDimsLabel">Ebatlar (X, Y, Z)</span>
+                <span id="stat-dimensions" class="text-xs font-semibold text-slate-200 font-mono">- × - × - mm</span>
+              </div>
+              <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800/80">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-mono block" data-i18n="statVolumeLabel">Model Hacmi</span>
+                <span id="stat-volume" class="text-xs font-semibold text-indigo-400 font-mono">0.00 cm³</span>
+              </div>
+              <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800/80">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-mono block" data-i18n="statSurfaceLabel">Yüzey Alanı</span>
+                <span id="stat-surface" class="text-xs font-semibold text-slate-200 font-mono">0.00 cm²</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ORTA SÜTUN: Üretim Parametreleri & İşçilik (4 Kolon) -->
+        <div class="xl:col-span-4 flex flex-col gap-6">
+          
+          <div class="card p-5 flex flex-col gap-5">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+              <svg class="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+              Baskı ve Üretim Parametreleri
+            </h2>
+
+            <!-- Yazıcı Seçimi -->
+            <div>
+              <label class="label-title">Baskı Yapılacak Yazıcı</label>
+              <select id="calc-printer-select" class="form-select">
+                <!-- JS dinamik dolduracak -->
+              </select>
+              <p id="printer-spec-hint" class="text-[11px] text-slate-400 mt-1">220×220×220mm • FDM • ~200W</p>
+            </div>
+
+            <!-- Malzeme & Filament Türü (Ülke & Marka Veri Tabanı Destekli) -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="label-title mb-0" id="txt-material-title">Hammadde & Filament Markası</label>
+                <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                  <span class="text-slate-500 pl-1">Ülke:</span>
+                  <button id="mat-country-tr" class="px-2 py-0.5 rounded font-bold transition-colors bg-indigo-600 text-white">TR</button>
+                  <button id="mat-country-global" class="px-2 py-0.5 rounded font-bold transition-colors text-slate-400 hover:text-white">Global (US/EU)</button>
+                </div>
+              </div>
+
+              <!-- Malzeme Seçim Açılır Menüsü -->
+              <select id="calc-material-select" class="form-select text-xs">
+                <!-- JS dinamik MATERIAL_CATALOG ile dolduracak -->
+              </select>
+
+              <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+                <span>Birim Maliyet: <b id="material-unit-price-label" class="text-cyan-400 font-mono">450 TL/kg</b></span>
+                <span id="material-density-badge" class="font-mono text-slate-400">1.24 g/cm³</span>
+              </div>
+              <div id="orca-material-params-badge" class="text-[10px] text-indigo-300 bg-indigo-950/40 px-2.5 py-1 rounded-lg border border-indigo-800/40 font-mono flex items-center justify-between">
+                <span>Orca Slicer: Nozzle 215°C • Tabla 55°C</span>
+                <span class="text-indigo-400 font-semibold">PLA Profili</span>
+              </div>
+            </div>
+
+            <!-- ÇOK RENKLİ (MULTICOLOR) BASKI VE PURGE/ATIK YAPILANDIRMASI -->
+            <div class="bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900 p-3.5 rounded-xl border border-indigo-500/30 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
+                  <input type="checkbox" id="calc-multicolor-enabled" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500"></span>
+                    <span id="txt-multicolor-toggle">Çok Renkli Baskı (Multicolor)</span>
+                  </span>
+                </label>
+                <span id="multicolor-status-badge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">Tek Renk</span>
+              </div>
+
+              <!-- Çok Renk Detayları (Açılır/Kapanır) -->
+              <div id="multicolor-details-container" class="hidden space-y-2.5 pt-2 border-t border-slate-800/80 text-xs">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[11px] text-slate-300 block mb-1">Filament Değişimi (Swaps):</label>
+                    <input type="number" id="calc-color-swaps" class="form-input text-right font-mono py-1 text-xs" value="0" min="0" step="1">
+                    <span class="text-[10px] text-slate-500">Kule / Takım Değişimi</span>
+                  </div>
+                  <div>
+                    <label class="text-[11px] text-slate-300 block mb-1">Swap Başı Fire (Poop):</label>
+                    <div class="flex items-center gap-1">
+                      <input type="number" id="calc-purge-per-swap" class="form-input text-right font-mono py-1 text-xs" value="0.8" min="0.1" step="0.1">
+                      <span class="text-[10px] text-slate-400">g</span>
+                    </div>
+                    <span class="text-[10px] text-slate-500">0.5g - 1.2g arası</span>
+                  </div>
+                </div>
+
+                <div class="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between text-[11px]">
+                  <span class="text-slate-400">Toplam Atık & Ek Süre:</span>
+                  <span class="font-mono text-purple-300 font-semibold" id="stat-total-purge-info">+0.0g atık • +0 dk</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ağırlık, Dolgu & Kabuk/Duvar Ayarı (OrcaSlicer Tabanlı Simülasyon) -->
+            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span class="text-xs font-bold text-slate-200">Dilimleme Motoru:</span>
+                  <span class="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/25">OrcaSlicer Tabanlı (v2.x)</span>
+                </div>
+                <span class="text-[10px] text-slate-400">0.42mm Hat • Gyroid / Cross Hatch</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="label-title" data-i18n="infillPercentLabel">İç Dolgu Oranı (%)</label>
+                  <div class="flex items-center gap-2">
+                    <input type="number" id="calc-infill" class="form-input text-right font-mono" value="15" min="0" max="100" step="5">
+                    <span class="text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="label-title">Dolgu Deseni (Orca Pattern)</label>
+                  <select id="calc-infill-pattern" class="form-select text-xs py-2">
+                    <option value="gyroid" selected>Gyroid (Orca Varsayılan - Titreşimsiz)</option>
+                    <option value="cross_hatch">Cross Hatch (Orca Özel - Hızlı & Çarpışmasız)</option>
+                    <option value="grid">Grid (Hızlı Izgara)</option>
+                    <option value="honeycomb">Honeycomb (Petek)</option>
+                    <option value="adaptive_cubic">Adaptive Cubic (Akıllı Kübik)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="label-title" data-i18n="wallCountLabel">Duvar / Kabuk Sayısı</label>
+                  <select id="calc-wall-count" class="form-select text-xs py-2">
+                    <option value="1">1 Duvar (0.42 mm - Ultra Hafif)</option>
+                    <option value="2" selected>2 Duvar (0.84 mm - Standart)</option>
+                    <option value="3">3 Duvar (1.26 mm - Dayanıklı)</option>
+                    <option value="4">4 Duvar (1.68 mm - Güçlü Parça)</option>
+                    <option value="5">5 Duvar (2.10 mm - Endüstriyel)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label-title" data-i18n="layerHeightLabel">Katman Profili (Orca Presets)</label>
+                  <select id="calc-layer-height" class="form-select text-xs py-2">
+                    <option value="0.12">0.12 mm (Orca Fine - Detaylı)</option>
+                    <option value="0.16">0.16 mm (Orca Optimal - Dengeli)</option>
+                    <option value="0.20" selected>0.20 mm (Orca Standard - Varsayılan)</option>
+                    <option value="0.28">0.28 mm (Orca Draft - Hızlı Taslak)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
+                <div>
+                  <label class="label-title" data-i18n="calculatedWeightLabel">Hesaplanan Gramaj</label>
+                  <div class="flex items-center gap-2">
+                    <input type="number" id="calc-weight-grams" class="form-input text-right font-mono font-bold text-indigo-300" value="0.0" step="0.5">
+                    <span class="text-xs text-slate-400">gram</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="label-title">Model Katı Hacmi / Ağırlığı</label>
+                  <div class="flex items-center justify-between text-xs py-1.5 px-2 bg-slate-950/60 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 text-[11px]">Katı Ağırlık:</span>
+                    <b id="calc-solid-weight" class="text-slate-200 font-mono">0.0g</b>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-span-2 text-[11px] text-slate-400 flex items-center justify-between pt-1">
+                <span>Dış Kabuk: <b id="calc-shell-weight" class="text-slate-300 font-mono">0.0g</b> • İç Dolgu: <b id="calc-infill-weight" class="text-slate-300 font-mono">0.0g</b></span>
+                <span class="text-indigo-400 cursor-pointer hover:underline" id="btn-recalc-weight" data-i18n="recalcFromGeometry">Geometriden Güncelle</span>
+              </div>
+            </div>
+
+            <!-- DESTEK (SUPPORT) YAPILANDIRMASI (OrcaSlicer Ağaç & Snug) -->
+            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="label-title mb-0 flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                  Destek Yapılandırması (Orca Support)
+                </label>
+                <span id="support-status-badge" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">Desteksiz</span>
+              </div>
+
+              <select id="calc-support-type" class="form-select text-xs">
+                <option value="none">Destek Yok (0g ek malzeme)</option>
+                <option value="auto_tree" selected>OrcaSlicer Slim Tree (Ağaç Destek - İnce & Hızlı Ayrılan - %14 ek)</option>
+                <option value="auto_tree_hybrid">OrcaSlicer Tree Hybrid (Hibrit Ağaç - Güçlü Gövde - %20 ek)</option>
+                <option value="auto_snug">OrcaSlicer Snug Grid (Klasik Izgara Destek - %28 ek malzeme)</option>
+                <option value="painted_only">Yalnızca 3D Modelde Boyanan Alanlara Destek</option>
+              </select>
+
+              <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                <span>Boyalı/Sarkan Destek Alanı: <b id="stat-painted-area" class="text-amber-300 font-mono">0.0 cm²</b></span>
+                <span>Destek Gramajı: <b id="stat-support-weight" class="text-indigo-300 font-mono">+0.0g</b></span>
+              </div>
+            </div>
+
+            <!-- Baskı Süresi -->
+            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+              <label class="label-title">Baskı Süresi (Dilimleyici / Tahmini)</label>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center gap-2">
+                  <input type="number" id="calc-time-hours" class="form-input text-right font-mono" value="2" min="0">
+                  <span class="text-xs text-slate-400">Saat</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="calc-time-minutes" class="form-input text-right font-mono" value="30" min="0" max="59">
+                  <span class="text-xs text-slate-400">Dakika</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between mt-2 text-[11px] text-slate-400">
+                <span>Toplam Süre: <b id="calc-total-hours" class="text-cyan-400 font-mono">2.50 saat</b></span>
+                <span id="slicer-time-detected" class="text-emerald-400 hidden">✓ 3MF'den Alındı</span>
+              </div>
+            </div>
+
+            <!-- Adet / Miktar -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="label-title mb-0">Sipariş Baskı Adedi</label>
+                <span class="text-xs text-slate-400">Toplu indirim için</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="number" id="calc-quantity" class="form-input text-center font-mono font-bold text-white text-base" value="1" min="1">
+                <span class="text-xs text-slate-400">Adet Parça</span>
+              </div>
+            </div>
+
+            <!-- İşçilik & Tasarım (Fusion/Blender + Atölye Operasyonu) -->
+            <div class="border-t border-slate-800 pt-4 flex flex-col gap-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>İşçilik & Tasarım Hizmetleri</span>
+                <span class="text-[10px] font-normal text-indigo-400 cursor-pointer" id="btn-toggle-design-details">Detaylar</span>
+              </h3>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="label-title">Operasyon & Temizleme</label>
+                  <div class="flex items-center gap-1.5">
+                    <input type="number" id="calc-prep-time" class="form-input text-right font-mono" value="15" min="0" step="5">
+                    <span class="text-xs text-slate-400">dk</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 mt-0.5 block">Dilimleme, söküm, destek</span>
+                </div>
+                <div>
+                  <label class="label-title">Fusion / Blender Çizim</label>
+                  <div class="flex items-center gap-1.5">
+                    <input type="number" id="calc-design-hours" class="form-input text-right font-mono" value="0.0" min="0" step="0.5">
+                    <span class="text-xs text-slate-400">saat</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 mt-0.5 block">Özel modelleme süresi</span>
+                </div>
+              </div>
+
+              <!-- SLA Özel Ek Sarfiyat (Reçine Yıkama & Kürleme) -->
+              <div id="sla-addons-card" class="hidden p-3 rounded-xl bg-violet-950/20 border border-violet-800/40">
+                <div class="flex items-center justify-between text-xs font-semibold text-violet-300 mb-1">
+                  <span>Elegoo Saturn 4 SLA Ek Sarfiyatları</span>
+                  <span class="font-mono text-cyan-300">+25 TL / baskı</span>
+                </div>
+                <p class="text-[11px] text-violet-400/80">İzopropil alkol (IPA) yıkama kaybı, UV kürleme haznesi aşınması, nitril eldiven & süzgeç maliyeti otomatik eklenir.</p>
+              </div>
+
+            </div>
+
+            <!-- DİNAMİK ÖZEL GİDER VE MALİYET KALEMLERİ (İŞÇİLİK, KARGO, PAKETLEME VB.) -->
+            <div class="border-t border-slate-800 pt-4 flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span data-i18n="customCostItemsTitle">Ek Gider & İşçilik Kalemleri</span>
+                </h3>
+                <button id="btn-quick-manage-costs" class="text-[11px] text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 font-medium" data-i18n="manageCostItems">
+                  + Kalem Yönet / Ekle
+                </button>
+              </div>
+
+              <!-- Dinamik Kalemler Listesi (Checkboxlar ve parametreler) -->
+              <div id="active-custom-items-container" class="space-y-2 bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/80 text-xs">
+                <!-- JS dinamik dolduracak -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- SAĞ SÜTUN: Finansal Döküm & Maliyet Tablosu (3 Kolon) -->
+        <div class="xl:col-span-3 flex flex-col gap-6">
+          
+          <!-- Maliyet Özeti Kartı -->
+          <div class="card p-5 bg-gradient-to-b from-slate-900 to-slate-950 border-indigo-500/30 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                  <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  Maliyet Dökümü
+                </h2>
+                <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">1 Parça</span>
+              </div>
+
+              <!-- Kalem Kalem Maliyetler -->
+              <div class="space-y-2.5 text-xs">
+                
+                <div class="flex items-center justify-between py-1 border-b border-slate-800/60">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                    Hammadde (Filament/Reçine):
+                  </span>
+                  <span id="cost-material" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+                <div id="cost-multicolor-row" class="flex items-center justify-between py-1 border-b border-slate-800/60 hidden">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span>
+                    <span id="txt-cost-multicolor-label">Çok Renkli Kule/Poop Atığı:</span>
+                  </span>
+                  <span id="cost-multicolor-waste" class="font-mono font-medium text-pink-300">0.00 TL</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1 border-b border-slate-800/60">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    Elektrik Enerjisi:
+                  </span>
+                  <span id="cost-electricity" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1 border-b border-slate-800/60">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                    Yazıcı Aşınma & Nozzle/LCD:
+                  </span>
+                  <span id="cost-printer-wear" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1 border-b border-slate-800/60">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                    Dükkan Kirası & Sabit Gider:
+                  </span>
+                  <span id="cost-rent-share" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1 border-b border-slate-800/60">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    Laptop & Ekipman Payı:
+                  </span>
+                  <span id="cost-laptop-share" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1 border-b border-slate-800/60">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    İşçilik & Operasyon:
+                  </span>
+                  <span id="cost-labor" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+                <div id="cost-design-row" class="flex items-center justify-between py-1 border-b border-slate-800/60 hidden">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                    3D Modelleme (Fusion/Blender):
+                  </span>
+                  <span id="cost-design" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+                <div id="cost-custom-items-row" class="flex items-center justify-between py-1 border-b border-slate-800/60 hidden">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                    <span data-i18n="costCustomItemsLabel">Ek Kalemler & İşçilik:</span>
+                  </span>
+                  <span id="cost-custom-items-total" class="font-mono font-medium text-cyan-300">0.00 TL</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1 border-b border-slate-800/60">
+                  <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                    Baskı Riski & Fire (%10):
+                  </span>
+                  <span id="cost-risk" class="font-mono font-medium text-slate-200">0.00 TL</span>
+                </div>
+
+              </div>
+
+              <!-- Toplam Net Maliyet -->
+              <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span class="text-[11px] text-slate-400 uppercase tracking-wider block">Net Üretim Maliyeti</span>
+                  <span class="text-[10px] text-slate-500">Kâr ve KDV hariç</span>
+                </div>
+                <span id="cost-net-total" class="text-base font-bold font-mono text-slate-100">0.00 TL</span>
+              </div>
+
+              <!-- Kâr & Fiyatlandırma Kontrolleri -->
+              <div class="mt-4 space-y-3 pt-3 border-t border-slate-800">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs text-slate-300 font-medium">Hedef Kâr Marjı (%)</label>
+                  <div class="flex items-center gap-1.5">
+                    <input type="number" id="calc-margin-percent" class="form-input text-right font-mono w-20 py-1" value="50" min="0" max="1000" step="5">
+                    <span class="text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <label class="text-xs text-slate-300 font-medium flex items-center gap-1.5">
+                    <input type="checkbox" id="calc-kdv-check" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                    KDV Ekle (%20)
+                  </label>
+                  <span id="cost-kdv-amount" class="text-xs font-mono text-slate-400">0.00 TL</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- NİHAİ SATIŞ FİYATI -->
+            <div class="mt-6 pt-4 border-t border-slate-800">
+              <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-500/40 text-center relative overflow-hidden shadow-xl">
+                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl pointer-events-none"></div>
+                
+                <span class="text-xs font-semibold text-indigo-300 tracking-wide uppercase block mb-1">Önerilen Satış Fiyatı</span>
+                <div class="text-2xl font-black font-mono text-white tracking-tight" id="final-unit-price">
+                  0.00 TL
+                </div>
+                
+                <div id="quantity-total-badge" class="mt-2 text-xs font-mono text-cyan-400 bg-cyan-950/40 py-1 px-2.5 rounded-lg border border-cyan-800/40 inline-block">
+                  Toplam (<span id="total-qty-label">1</span> Adet): <b id="final-total-price">0.00 TL</b>
+                </div>
+              </div>
+
+              <!-- İşlem Butonları -->
+              <div class="mt-4 grid grid-cols-2 gap-2">
+                <button id="btn-go-to-report" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 font-semibold text-xs transition-all flex items-center justify-center gap-1.5" title="Şirket içi gizli detaylı maliyet raporunu aç ve arşivle">
+                  <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <span data-i18n="btnDetailedReport">Detaylı Rapor (Patron)</span>
+                </button>
+                <button id="btn-go-to-quote" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-1.5" title="Müşteriye verilecek fiyat fişine git">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <span data-i18n="btnCustomerQuote">Müşteri Teklifi (Fiş)</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SEKME 2: MAKİNE PARKI YÖNETİMİ (8 YAZICI) -->
+    <!-- ========================================== -->
+    <div id="tab-fleet" class="tab-pane">
+      <div class="max-w-5xl mx-auto space-y-6">
+        
+        <div class="card p-6">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+            <div>
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span id="txt-fleet-title">Yazıcı Filosu & Teknik Parametreler</span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-1" id="txt-fleet-desc">
+                Atölyenizdeki mevcut yazıcıların güç tüketimi, aşınma ve tabla ölçüleri. Piyasada bulunan hazır modellerden hızlıca ekleyebilirsiniz.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-open-catalog" class="btn-primary text-xs flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span id="txt-add-from-catalog">Piyasadaki Hazır Yazıcılardan Ekle</span>
+              </button>
+              <button id="btn-add-printer" class="btn-secondary text-xs flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span id="txt-add-custom-printer">Özel Yazıcı Ekle</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Yazıcı Listesi Tablosu / Kartları -->
+          <div id="printers-list-container" class="space-y-4">
+            <!-- JS tarafından doldurulacak -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SEKME 3: ATÖLYE GİDERLERİ & KİRA (OVERHEAD) -->
+    <!-- ========================================== -->
+    <div id="tab-workshop" class="tab-pane">
+      <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- 0. BLOK: FİRMA / ATÖLYE KİMLİĞİ & LOGO -->
+        <div class="card p-6 border-indigo-500/30 shadow-lg shadow-indigo-950/20">
+          <div class="border-b border-slate-800 pb-4 mb-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <span id="txt-company-profile-title">Firma & Atölye Kimliği (Logo ve Teklif Başlığı)</span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-1" id="txt-company-profile-desc">
+                Müşteri teklif fişinde, raporlarda ve PDF çıktılarında görünecek kurumsal bilgileriniz ve atölye logonuz.
+              </p>
+            </div>
+            <span class="text-[11px] px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">Kurumsal Teklif Başlığı</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Sol: Logo Yükleme & Önizleme -->
+            <div class="space-y-3 flex flex-col items-center justify-center p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-center">
+              <span class="text-xs font-semibold text-slate-300">Firma / Atölye Logosu</span>
+              
+              <div id="company-logo-preview-box" class="w-36 h-28 rounded-xl border-2 border-dashed border-slate-700 bg-slate-950 flex flex-col items-center justify-center overflow-hidden p-2 relative group">
+                <img id="setting-company-logo-img" src="" alt="Firma Logosu" class="max-w-full max-h-full object-contain hidden">
+                <div id="setting-company-logo-placeholder" class="text-center text-slate-500">
+                  <svg class="w-8 h-8 mx-auto mb-1 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="text-[10px] block">Logo Yok</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <label for="setting-company-logo-file" class="cursor-pointer btn-secondary text-xs px-3 py-1.5 inline-block">
+                  Logo Seç
+                </label>
+                <input type="file" id="setting-company-logo-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" class="hidden">
+                <button type="button" id="btn-remove-company-logo" class="btn-ghost text-xs px-2 py-1.5 text-rose-400 hover:text-rose-300 hidden">
+                  Kaldır
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-500">PNG, JPG, SVG (Şeffaf PNG önerilir)</p>
+            </div>
+
+            <!-- Sağ: İletişim & Firma Bilgileri -->
+            <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
+                <label class="label-title">Firma / Atölye Adı (Ticari Ünvan)</label>
+                <input type="text" id="setting-company-name" class="form-input text-xs" placeholder="Örn: Nova 3D Tasarım & İmalat Atölyesi">
+              </div>
+
+              <div>
+                <label class="label-title">Yetkili Kişi</label>
+                <input type="text" id="setting-company-contact" class="form-input text-xs" placeholder="Örn: Ahmet Yılmaz">
+              </div>
+
+              <div>
+                <label class="label-title">Telefon Numarası</label>
+                <input type="text" id="setting-company-phone" class="form-input text-xs" placeholder="Örn: +90 555 123 4567">
+              </div>
+
+              <div>
+                <label class="label-title">E-posta Adresi</label>
+                <input type="email" id="setting-company-email" class="form-input text-xs" placeholder="Örn: info@nova3d.com">
+              </div>
+
+              <div>
+                <label class="label-title">Web Sitesi / Sosyal Medya</label>
+                <input type="text" id="setting-company-website" class="form-input text-xs" placeholder="Örn: www.nova3d.com">
+              </div>
+
+              <div class="sm:col-span-2">
+                <label class="label-title">Atölye / Teslimat Adresi</label>
+                <input type="text" id="setting-company-address" class="form-input text-xs" placeholder="Örn: İkitelli OSB Triko Center No:42 Başakşehir / İstanbul">
+              </div>
+            </div>
+          </div>
+
+          <!-- Firma Bilgileri Hızlı Kaydet Butonu -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-800 mt-2">
+            <button type="button" id="btn-save-company-only" class="btn-primary text-xs flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Firma Bilgilerini & Logoyu Kaydet
+            </button>
+            <div id="company-save-status" class="text-xs text-emerald-400 font-medium hidden flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-800/40 px-3 py-1.5 rounded-lg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Firma bilgileri başarıyla güncellendi ve teklif fişine yansıtıldı!
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-6">
+          <div class="border-b border-slate-800 pb-4 mb-5">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              Kira, Elektrik ve Sabit İşletme Giderleri
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Kiranız ve sabit genel giderleriniz, 8 adet yazıcınızın aylık toplam çalışma kapasitesine oranlanarak saatlik adil maliyet olarak her baskıya paylaştırılır.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Kira & Sabit Giderler -->
+            <div class="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                Dükkan Kirası ve Genel Masraflar
+              </h3>
+
+              <div>
+                <label class="label-title">Aylık Kira Bedeli (TL)</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-rent-monthly" class="form-input font-mono" value="15000" step="500">
+                  <span class="text-xs text-slate-400">TL/ay</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="label-title">Sabit Faturalar & Aidat / İnternet (TL)</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-bills-monthly" class="form-input font-mono" value="2500" step="250">
+                  <span class="text-xs text-slate-400">TL/ay</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="label-title">Yazıcı Başına Aylık Hedef Çalışma Saati</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-hours-per-printer" class="form-input font-mono" value="200" step="10">
+                  <span class="text-xs text-slate-400">saat/makine</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">Örn: Günde ~8 saat, ayda 25 gün = 200 saat.</p>
+              </div>
+
+              <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-400">Saatlik Kira Maliyeti (Makine Başı):</span>
+                  <span id="stat-hourly-rent-share" class="font-mono font-bold text-cyan-400">10.94 TL/saat</span>
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">
+                  (Toplam Kira + Faturalar) / (8 Yazıcı × 200 saat)
+                </div>
+              </div>
+            </div>
+
+            <!-- Elektrik, Donanım & Saat Ücretleri -->
+            <div class="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                Elektrik, Laptop ve İşçilik Saat Ücretleri
+              </h3>
+
+              <div>
+                <label class="label-title">Elektrik Birim Fiyatı (kWh)</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-electricity-kwh" class="form-input font-mono" value="3.20" step="0.1">
+                  <span class="text-xs text-slate-400">TL/kWh</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">Ticari / Sanayi veya Mesken güncel tarifesi.</p>
+              </div>
+
+              <div>
+                <label class="label-title">Laptop Satın Alma Bedeli (TL)</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-laptop-cost" class="form-input font-mono" value="35000" step="1000">
+                  <span class="text-xs text-slate-400">TL</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">36 ay ömür üzerinden saatlik amortismanı hesaplanır.</p>
+              </div>
+
+              <div>
+                <label class="label-title">Saatlik Operasyonel İşçilik Ücreti (TL)</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-labor-hourly" class="form-input font-mono" value="150" step="25">
+                  <span class="text-xs text-slate-400">TL/saat</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">Parça söküm, dilimleme ve yüzey temizliği için.</p>
+              </div>
+
+              <div>
+                <label class="label-title">Fusion 360 & Blender Tasarım Saat Ücreti (TL)</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-design-hourly" class="form-input font-mono" value="350" step="50">
+                  <span class="text-xs text-slate-400">TL/saat</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">Sıfırdan parça çizimi veya revizyon yapıldığında.</p>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- 3. BLOK: GENEL TERCİHLER & FİYATLANDIRMA AYARLARI -->
+          <div class="mt-6 p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-4">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span id="txt-general-settings-title">Genel Tercihler & Varsayılan Fiyatlandırma</span>
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Varsayılan Kâr Marjı -->
+              <div>
+                <label class="label-title" id="txt-default-margin-label">Varsayılan Hedef Kâr Marjı (%)</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="setting-default-margin" class="form-input font-mono" value="50" min="0" max="1000" step="5">
+                  <span class="text-xs text-slate-400">%</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1" id="txt-default-margin-desc">Yeni model yüklendiğinde otomatik uygulanır.</p>
+              </div>
+
+              <!-- Dil Seçimi -->
+              <div>
+                <label class="label-title" id="txt-setting-lang-label">Arayüz Dili (Language)</label>
+                <select id="setting-language-select" class="form-select font-medium text-xs">
+                  <option value="tr">Türkçe (TR)</option>
+                  <option value="en">English (EN)</option>
+                </select>
+                <p class="text-[11px] text-slate-500 mt-1" id="txt-setting-lang-desc">Tüm ekranlar ve teklif fişi için dil tercihi.</p>
+              </div>
+
+              <!-- Malzeme Ülke Pazarı -->
+              <div>
+                <label class="label-title" id="txt-setting-country-label">Hammadde Pazarı & Ülke</label>
+                <select id="setting-country-select" class="form-select font-medium text-xs">
+                  <option value="tr">Türkiye (Filenta, Porima, Microzey...)</option>
+                  <option value="global">Global (Bambu, Polymaker, Prusament...)</option>
+                </select>
+                <p class="text-[11px] text-slate-500 mt-1" id="txt-setting-country-desc">Piyasa filament ve reçine fiyatları listesi.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. BLOK: ÖZEL MALİYET VE GİDER KALEMLERİ YÖNETİMİ (KULLANICI TANIMLI KALEMLER) -->
+          <div class="mt-6 p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                  <span data-i18n="customCostItemsMgmtTitle">Özel Maliyet & Gider Kalemleri Yönetimi</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5" data-i18n="customCostItemsMgmtDesc">İşçilik, kargo, ambalaj, pirinç dişli montajı gibi istediğiniz tüm özel gider kalemlerini ekleyebilir, silebilir ve düzenleyebilirsiniz.</p>
+              </div>
+              <button id="btn-open-add-cost-item" class="btn-primary text-xs flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span data-i18n="addNewCostItem">Yeni Kalem Ekle</span>
+              </button>
+            </div>
+
+            <!-- Kalemler Tablosu -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+                    <th class="py-2.5 px-3">Kalem Adı</th>
+                    <th class="py-2.5 px-3">Kategori</th>
+                    <th class="py-2.5 px-3">Hesaplama Türü</th>
+                    <th class="py-2.5 px-3 text-right">Birim Tutar / Oran</th>
+                    <th class="py-2.5 px-3 text-center">Varsayılan</th>
+                    <th class="py-2.5 px-3 text-right">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody id="custom-cost-items-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                  <!-- JS dinamik dolduracak -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-3">
+            <button id="btn-save-settings" class="btn-primary text-sm px-6 py-2.5">
+              Gider Ayarlarını Kaydet
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SEKME 4: MÜŞTERİ TEKLİFİ & YAZDIRILABİLİR FİŞ -->
+    <!-- ========================================== -->
+    <div id="tab-quote" class="tab-pane">
+      <div class="max-w-3xl mx-auto space-y-6">
+        
+        <!-- MODEL YÜKLENMEDİĞİNDE GÖRÜNEN BOŞ DURUM (EMPTY STATE) -->
+        <div id="quote-empty-state" class="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center max-w-xl mx-auto space-y-4">
+          <div class="w-16 h-16 bg-indigo-950/60 text-indigo-400 rounded-full flex items-center justify-center mx-auto border border-indigo-800/40">
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <h3 class="text-base font-bold text-white">Henüz Teklif Oluşturulacak Bir Model Yüklenmedi</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Müşterinize profesyonel fiyat fişi ve PDF teklif belgesi hazırlamak için lütfen önce hesaplayıcı ekranından bir .STL, .3MF veya .GCODE dosyası yükleyiniz.
+          </p>
+          <button type="button" id="btn-goto-upload" class="btn-primary text-xs mx-auto flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Model Yükleme Ekranına Git
+          </button>
+        </div>
+
+        <!-- MODEL YÜKLENDİĞİNDE GÖRÜNEN ETKİLEŞİMLİ TEKLİF ALANI -->
+        <div id="quote-interactive-container" class="space-y-6 hidden">
+
+          <div class="flex flex-wrap items-center justify-between gap-4 no-print">
+            <div>
+              <h2 class="text-lg font-bold text-white">Müşteri Teklif Formu & Yazdırılabilir Fiş</h2>
+              <p class="text-xs text-slate-400">Müşterinize iletebileceğiniz profesyonel fiyat kartı ve teklif özeti.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-goto-company-settings" class="btn-secondary text-xs flex items-center gap-1.5" title="Firma adı, telefon ve logonuzu düzenleyin">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Firma & Logo Düzenle
+              </button>
+              <button id="btn-print-quote" class="btn-primary text-xs flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Yazdır / PDF Kaydet
+              </button>
+              <button id="btn-copy-quote" class="btn-secondary text-xs flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                WhatsApp / Metin Kopyala
+              </button>
+            </div>
+          </div>
+
+          <!-- MÜŞTERİ BİLGİLERİ GİRİŞ FORMU (NO-PRINT) -->
+          <div class="card p-5 border-indigo-500/30 no-print space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                Teklif Müşteri Bilgileri & Özel Şartlar
+              </h3>
+              <span class="text-[10px] text-slate-400">Teklif fişine basılacak müşteri bilgilerini giriniz</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="label-title">Müşteri / Kurum Adı</label>
+                <input type="text" id="quote-input-customer-name" class="form-input text-xs" placeholder="Örn: ABC Mühendislik / Ahmet Bey">
+              </div>
+              <div>
+                <label class="label-title">Müşteri Telefon</label>
+                <input type="text" id="quote-input-customer-phone" class="form-input text-xs" placeholder="Örn: +90 555 123 4567">
+              </div>
+              <div>
+                <label class="label-title">Müşteri E-posta</label>
+                <input type="email" id="quote-input-customer-email" class="form-input text-xs" placeholder="Örn: musteri@firma.com">
+              </div>
+              <div>
+                <label class="label-title">Teklif Numarası</label>
+                <input type="text" id="quote-input-number" class="form-input text-xs font-mono" placeholder="#TK-8421">
+              </div>
+              <div>
+                <label class="label-title">Teklif Geçerlilik Süresi</label>
+                <input type="text" id="quote-input-validity" class="form-input text-xs" placeholder="Örn: 7 Gün">
+              </div>
+              <div>
+                <label class="label-title">Özel Sipariş / Teslimat Notu</label>
+                <input type="text" id="quote-input-notes" class="form-input text-xs" placeholder="Örn: Teslimat atölyemizden yapılır. Kargo alıcıya aittir.">
+              </div>
+            </div>
+          </div>
+
+          <!-- Yazdırılabilir Teklif Kağıdı -->
+          <div id="printable-quote-card" class="bg-white text-slate-900 rounded-2xl p-8 shadow-2xl border border-slate-200 printable-area">
+            
+            <div class="flex items-start justify-between border-b border-slate-200 pb-6 mb-6">
+              <div class="flex items-center gap-4">
+                <!-- Kurumsal Logo Kutusu -->
+                <div id="quote-logo-wrapper" class="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50 flex-shrink-0">
+                  <img id="quote-company-logo" src="" alt="Firma Logosu" class="max-w-full max-h-full object-contain hidden">
+                  <div id="quote-company-badge" class="w-12 h-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-base font-bold shadow-md shadow-indigo-600/30">3D</div>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-slate-900" id="quote-company-name">3D Üretim ve Prototip Teklifi</h3>
+                  <p class="text-xs text-slate-500 font-medium" id="quote-company-sub">Filenta PLA & Yüksek Hassasiyetli SLA Üretim Hizmeti</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5" id="quote-company-contact-line"></p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-mono text-slate-400 block">Tarih: <span id="quote-date" class="text-slate-700">25.10.2026</span></span>
+                <span class="text-xs font-mono text-slate-400 block">Teklif No: <span id="quote-no" class="text-slate-700">#TK-8421</span></span>
+              </div>
+            </div>
+
+            <!-- Müşteri, Model ve Üretim Bilgileri (3 Kolonlu Kart Düzeni) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-xs">
+              <!-- 1. Müşteri Bilgisi -->
+              <div class="p-3 bg-indigo-50/60 rounded-lg border border-indigo-100">
+                <span class="text-indigo-600 block mb-1 uppercase font-semibold text-[10px]">Sayın / Müşteri</span>
+                <p class="font-bold text-slate-900 text-sm truncate" id="quote-display-customer-name">Belirtilmedi</p>
+                <p class="text-slate-600 mt-0.5 text-[11px] truncate" id="quote-display-customer-contact">-</p>
+              </div>
+              <!-- 2. Model & Dosya Bilgisi -->
+              <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-slate-400 block mb-1 uppercase font-semibold text-[10px]">Model & Dosya</span>
+                <p class="font-bold text-slate-800 text-sm truncate" id="quote-model-name">ornek_model.stl</p>
+                <p class="text-slate-500 mt-0.5 text-[11px]">Ebat: <span id="quote-dimensions" class="font-mono">-</span></p>
+              </div>
+              <!-- 3. Üretim Detayları -->
+              <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-slate-400 block mb-1 uppercase font-semibold text-[10px]">Üretim Detayları</span>
+                <p class="font-bold text-slate-800 text-sm truncate" id="quote-tech-detail">-</p>
+                <p class="text-slate-500 mt-0.5 text-[11px]">Dolgu: <span id="quote-infill">20%</span> • Adet: <span id="quote-quantity" class="font-bold text-indigo-600">1</span></p>
+              </div>
+            </div>
+
+            <!-- Teklif Kalemleri Tablosu -->
+            <table class="w-full text-left text-xs mb-6 border-collapse">
+              <thead>
+                <tr class="border-b-2 border-slate-200 text-slate-600 font-semibold uppercase text-[11px]">
+                  <th class="py-2">Hizmet / Açıklama</th>
+                  <th class="py-2 text-center">Baskı Süresi</th>
+                  <th class="py-2 text-center">Miktar</th>
+                  <th class="py-2 text-right">Birim Fiyat</th>
+                  <th class="py-2 text-right">Toplam</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tr>
+                  <td class="py-3">
+                    <span class="font-semibold text-slate-900 block" id="quote-item-title">3D Baskı İmalatı</span>
+                    <span class="text-slate-500 text-[11px]" id="quote-item-sub">Filenta PLA hammadde, makine süresi, yüzey temizliği dahil</span>
+                  </td>
+                  <td class="py-3 text-center font-mono" id="quote-item-time">2.5 sa</td>
+                  <td class="py-3 text-center font-bold" id="quote-item-qty">1</td>
+                  <td class="py-3 text-right font-mono" id="quote-item-unit">0.00 TL</td>
+                  <td class="py-3 text-right font-mono font-bold text-slate-900" id="quote-item-total">0.00 TL</td>
+                </tr>
+                <tr id="quote-design-tr" class="hidden">
+                  <td class="py-3">
+                    <span class="font-semibold text-slate-900 block">3D Tasarım & CAD Modelleme</span>
+                    <span class="text-slate-500 text-[11px]">Fusion 360 / Blender özel çizim ve teknik uyarlama</span>
+                  </td>
+                  <td class="py-3 text-center font-mono" id="quote-design-hours">1.0 sa</td>
+                  <td class="py-3 text-center">1</td>
+                  <td class="py-3 text-right font-mono" id="quote-design-unit">350.00 TL</td>
+                  <td class="py-3 text-right font-mono font-bold text-slate-900" id="quote-design-total">350.00 TL</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Alt Toplamlar & Fiyat -->
+            <div class="border-t-2 border-slate-200 pt-4 flex justify-between items-start">
+              <div class="text-[11px] text-slate-500 max-w-sm space-y-1">
+                <p id="quote-display-validity-text">• Teklif verildiği tarihten itibaren 7 gün boyunca geçerlidir.</p>
+                <p id="quote-display-notes-text">• Fiyatlara tasarım, malzeme ve üretim dahil olup teslimat atölyemizden yapılır.</p>
+              </div>
+
+              <div class="w-64 space-y-2 text-xs">
+                <div class="flex justify-between text-slate-600">
+                  <span>Ara Toplam:</span>
+                  <span id="quote-subtotal" class="font-mono font-medium">0.00 TL</span>
+                </div>
+                <div id="quote-kdv-row" class="flex justify-between text-slate-600">
+                  <span>KDV (%20):</span>
+                  <span id="quote-kdv" class="font-mono font-medium">0.00 TL</span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold text-slate-900 border-t border-slate-200 pt-2">
+                  <span>Genel Toplam:</span>
+                  <span id="quote-grand-total" class="text-lg font-mono text-indigo-700 font-extrabold">0.00 TL</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kurumsal Teklif Alt Bilgi & İletişim Şeridi -->
+            <div id="quote-footer-info" class="border-t border-slate-200/80 mt-6 pt-3 flex flex-wrap items-center justify-between text-[11px] text-slate-500">
+              <span id="quote-footer-company" class="font-semibold text-slate-700">3D Üretim ve Prototipleme Atölyesi</span>
+              <span id="quote-footer-address"></span>
+              <span id="quote-footer-contact" class="font-mono"></span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SEKME 5: DETAYLI MALİYET RAPORLARI & ARŞİV (PATRON / YÖNETİCİ) -->
+    <!-- ========================================== -->
+    <div id="tab-reports" class="tab-pane">
+      <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- Üst Başlık & Hızlı İşlem Araç Çubuğu -->
+        <div class="flex flex-wrap items-center justify-between gap-4 no-print">
+          <div>
+            <h2 class="text-xl font-black text-white flex items-center gap-2">
+              <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span data-i18n="reportsTabTitle">Detaylı İç Maliyet Raporu & Veritabanı Arşivi</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1" data-i18n="reportsTabDesc">Bu ekran yalnızca atölye sahibine özeldir. Elektrik, kira, amortisman, net maliyet ve kâr marjı detayları müşteri teklifinde ASLA görünmez.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="btn-save-current-report" class="btn-primary text-xs flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-900/30">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+              <span data-i18n="btnSaveReportToDb">Mevcut Modeli Arşivle & Kaydet</span>
+            </button>
+            <button id="btn-export-reports-json" class="btn-secondary text-xs flex items-center gap-1" title="Veritabanını JSON Olarak İndir">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              JSON İndir
+            </button>
+            <button id="btn-export-reports-csv" class="btn-secondary text-xs flex items-center gap-1" title="Tüm Raporları Excel / CSV Olarak İndir">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              CSV İndir
+            </button>
+          </div>
+        </div>
+
+        <!-- 1. BÖLÜM: AKTİF MODEL DETAYLI ŞİRKET İÇİ MALİYET RAPORU (GİZLİ PATRON RAPORU) -->
+        <div id="internal-report-container" class="card p-6 bg-slate-900/90 border-slate-700/80 shadow-2xl relative">
+          <div class="flex items-start justify-between border-b border-slate-800 pb-4 mb-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold uppercase tracking-wider">Gizli / Şirket İçi Maliyet Analizi</span>
+                <span class="text-xs font-mono text-slate-400" id="report-id-badge">#REP-8421</span>
+              </div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <span id="report-model-title">Model: ornek_model.stl</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5" id="report-subtitle">Flashforge AD5M • Filenta PLA • Gerçekçi Duvar & Dolgu Simülasyonu</p>
+            </div>
+
+            <div class="flex items-center gap-2 no-print">
+              <button id="btn-print-internal-report" class="btn-xs flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Yazdır / PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Model Teknik Özeti -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
+              <span class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">Model Boyutları</span>
+              <span id="report-dims" class="text-xs font-bold text-slate-200 font-mono">- × - × - mm</span>
+            </div>
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
+              <span class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">Gramaj & Atık</span>
+              <span id="report-weight-info" class="text-xs font-bold text-indigo-300 font-mono">0.0g (+0.0g fire)</span>
+            </div>
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
+              <span class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">Baskı & Makine Süresi</span>
+              <span id="report-time-info" class="text-xs font-bold text-amber-300 font-mono">0.00 saat</span>
+            </div>
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
+              <span class="text-[10px] uppercase font-mono text-slate-400 block mb-0.5">Dolgu & Kabuk</span>
+              <span id="report-infill-info" class="text-xs font-bold text-slate-200 font-mono">%15 • 2 Duvar</span>
+            </div>
+          </div>
+
+          <!-- Maliyet Kalemleri Detay Tablosu (İç Döküm) -->
+          <div class="overflow-x-auto mb-6">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+                  <th class="py-2.5 px-3">Gider / Maliyet Kalemi</th>
+                  <th class="py-2.5 px-3">Hesaplama Dayanağı / Parametreler</th>
+                  <th class="py-2.5 px-3 text-right">Birim Oran</th>
+                  <th class="py-2.5 px-3 text-right">Tutar (TL)</th>
+                  <th class="py-2.5 px-3 text-right">Maliyet Payı (%)</th>
+                </tr>
+              </thead>
+              <tbody id="report-cost-breakdown-body" class="divide-y divide-slate-800/60 text-slate-300">
+                <!-- JS dinamik dolduracak -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Finansal Özet & Kâr Tablosu -->
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="text-xs text-slate-400 block">Şirket İçi Net Üretim Maliyeti (Kâr Hariç):</span>
+              <span id="report-net-cost" class="text-xl font-black font-mono text-slate-100">0.00 TL</span>
+            </div>
+
+            <div class="flex items-center gap-6">
+              <div>
+                <span class="text-xs text-slate-400 block">Uygulanan Kâr Marjı:</span>
+                <span id="report-margin-rate" class="text-base font-bold font-mono text-emerald-400">%50</span>
+              </div>
+              <div>
+                <span class="text-xs text-slate-400 block">Net Kâr Tutarı:</span>
+                <span id="report-profit-amount" class="text-base font-bold font-mono text-emerald-400">0.00 TL</span>
+              </div>
+              <div class="pl-6 border-l border-slate-800 text-right">
+                <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wide block">Müşteri Teklif Fiyatı:</span>
+                <span id="report-final-price" class="text-2xl font-black font-mono text-indigo-300">0.00 TL</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. BÖLÜM: ARŞİVLENMİŞ MALİYET RAPORLARI VERİTABANI TABLOSU (LOCALSTORAGE) -->
+        <div class="card p-6 bg-slate-900/60 border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                <span data-i18n="archivedReportsDbTitle">Arşivlenmiş Maliyet Raporları Veritabanı</span>
+                <span id="report-count-badge" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">0 Kayıt</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5" data-i18n="archivedReportsDbDesc">Önceden hesaplanıp kaydedilmiş tüm modeller ve finansal analiz geçmişi.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input type="text" id="db-search-input" placeholder="Raporlarda ara..." class="form-input text-xs py-1 px-2.5 w-48">
+              <button id="btn-clear-reports-db" class="btn-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 border-rose-900/40">
+                Arşivi Temizle
+              </button>
+            </div>
+          </div>
+
+          <!-- Raporlar Tablosu -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+                  <th class="py-2.5 px-3">Tarih</th>
+                  <th class="py-2.5 px-3">Model Dosyası</th>
+                  <th class="py-2.5 px-3">Yazıcı & Malzeme</th>
+                  <th class="py-2.5 px-3 text-center">Baskı Süresi</th>
+                  <th class="py-2.5 px-3 text-right">Gramaj</th>
+                  <th class="py-2.5 px-3 text-right">Net Maliyet</th>
+                  <th class="py-2.5 px-3 text-right">Kâr (%)</th>
+                  <th class="py-2.5 px-3 text-right">Müşteri Fiyatı</th>
+                  <th class="py-2.5 px-3 text-right">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody id="archived-reports-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                <!-- JS dinamik dolduracak -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- YENİ ÖZEL MALİYET KALEMİ EKLEME MODAL PENCERESİ -->
+  <div id="modal-cost-item" class="modal-backdrop hidden">
+    <div class="modal-window flex flex-col p-6 max-w-md w-full">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span id="modal-cost-item-title" data-i18n="addEditCostItemTitle">Özel Gider & Maliyet Kalemi Tanımla</span>
+        </h3>
+        <button id="btn-close-cost-item-modal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="label-title">Kalem Adı</label>
+          <input type="text" id="input-cost-name" placeholder="Örn: Yurtiçi Kargo, Özel Kutu, Pirinç Somun..." class="form-input">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label-title">Kategori</label>
+            <select id="input-cost-category" class="form-select">
+              <option value="labor">İşçilik & Operasyon</option>
+              <option value="material">Sarf Malzeme & Kutu</option>
+              <option value="service">Lojistik & Kargo</option>
+              <option value="overhead">Genel Gider / Pay</option>
+            </select>
+          </div>
+          <div>
+            <label class="label-title">Hesaplama Türü</label>
+            <select id="input-cost-type" class="form-select">
+              <option value="fixed">Sabit Tutar (TL / sipariş)</option>
+              <option value="per_piece">Parça Başı (TL / adet)</option>
+              <option value="hourly">Süre Bazlı (TL / saat)</option>
+              <option value="per_gram">Ağırlık Bazlı (TL / gram)</option>
+              <option value="percentage">Yüzdesel (% Maliyet Payı)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label-title">Birim Tutar / Değer</label>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="input-cost-rate" class="form-input text-right font-mono" value="50" min="0" step="0.5">
+              <span id="input-cost-unit-label" class="text-xs text-slate-400">TL</span>
+            </div>
+          </div>
+          <div class="flex items-center pt-5">
+            <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+              <input type="checkbox" id="input-cost-default" checked class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+              <span>Varsayılan Açık</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-3 border-t border-slate-800 flex justify-end gap-2">
+        <button id="btn-cancel-cost-item" class="btn-secondary text-xs px-4 py-2">İptal</button>
+        <button id="btn-save-cost-item" class="btn-primary text-xs px-5 py-2">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PİYASADAKİ YAZICILAR KATALOĞU MODAL PENCERESİ -->
+  <div id="modal-printer-catalog" class="modal-backdrop hidden">
+    <div class="modal-window flex flex-col p-6 max-h-[85vh]">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <span id="txt-catalog-title">Piyasadaki Popüler 3D Yazıcı Kataloğu</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5" id="txt-catalog-desc">Satın almayı planladığınız veya atölyenize yeni kattığınız cihazı tek tıkla envanterinize ekleyin.</p>
+        </div>
+        <button id="btn-close-catalog-modal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Filtreler -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
+        <input type="text" id="catalog-search" placeholder="Model ara (örn: Bambu X1, K1 Max, Saturn...)" class="form-input text-xs py-1.5">
+        <select id="catalog-brand-filter" class="form-select text-xs py-1.5">
+          <option value="all">Tüm Markalar</option>
+          <option value="bambu">Bambu Lab</option>
+          <option value="creality">Creality</option>
+          <option value="prusa">Prusa Research</option>
+          <option value="flashforge">Flashforge</option>
+          <option value="qidi">Qidi Tech</option>
+          <option value="elegoo">Elegoo</option>
+          <option value="anycubic">Anycubic</option>
+        </select>
+        <select id="catalog-type-filter" class="form-select text-xs py-1.5">
+          <option value="all">Tüm Teknolojiler (FDM & SLA)</option>
+          <option value="fdm">Sadece FDM (Filament)</option>
+          <option value="sla">Sadece SLA (Reçine)</option>
+        </select>
+      </div>
+
+      <!-- Yazıcı Kartları Listesi -->
+      <div id="catalog-printers-grid" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
+        <!-- JS dinamik PRINTER_CATALOG ile dolduracak -->
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+        <button id="btn-close-catalog-bottom" class="btn-secondary text-xs px-4 py-1.5">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alt Bilgi / Footer -->
+  <footer class="border-t border-slate-800 bg-slate-950 py-3 px-6 text-center text-xs text-slate-500">
+    3D Baskı Atölyesi Maliyet Otomasyonu • Flashforge, Qidi, Creality, Elegoo SLA Destekli • Veriler yerel tarayıcınızda saklanır.
+  </footer>
+
+  <!-- Ana Script Dosyası -->
+  <script src="app.js"></script>
+</body>
+</html>

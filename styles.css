@@ -1,0 +1,323 @@
+/* 3D Baskı Maliyet ve Teklif Hesaplayıcı Stilleri */
+:root {
+  --bg-primary: #020617;
+  --bg-card: #0f172a;
+  --border-color: #1e293b;
+  --accent-indigo: #6366f1;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: #f1f5f9;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Sekme Geçişleri */
+.tab-pane {
+  display: none;
+}
+.tab-pane.active {
+  display: block;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Kartlar */
+.card {
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid #1e293b;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.2s ease;
+}
+.card:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+/* Nav Butonları */
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #94a3b8;
+  border-radius: 0.65rem;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.nav-btn:hover {
+  color: #f1f5f9;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.nav-btn.active {
+  color: #ffffff;
+  background-color: #6366f1;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+/* Form Elemanları */
+.label-title {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 0.375rem;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  background-color: #0b1120;
+  border: 1px solid #243048;
+  color: #f8fafc;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  background-color: #0d1527;
+}
+
+/* Butonlar */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 0.65rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: #1e293b;
+  color: #cbd5e1;
+  font-weight: 500;
+  padding: 0.55rem 1rem;
+  border-radius: 0.65rem;
+  border: 1px solid #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: #283548;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.btn-xs {
+  background-color: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-xs:hover {
+  color: #ffffff;
+  background-color: #334155;
+}
+
+/* 3D Destek Boyama Araçları */
+.tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #94a3b8;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.tool-btn:hover {
+  color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.tool-btn.active {
+  color: #ffffff;
+  background-color: #1e293b;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px #6366f1;
+}
+
+/* 3D Viewer & Bounding Box */
+#viewer-container {
+  touch-action: none;
+}
+#three-canvas {
+  outline: none;
+}
+
+/* Tabla Sığma Rozetleri */
+.badge-fit-ok {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.badge-fit-error {
+  background-color: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+/* Yazıcı Listesi Kartı */
+.printer-card {
+  background-color: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 0.85rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+.printer-card:hover {
+  border-color: #334155;
+  background-color: #0e1628;
+}
+
+/* Modeli Yönlendirme & Döndürme Araçları */
+.orient-btn {
+  background: #111827;
+  border: 1px solid #374151;
+  color: #d1d5db;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.orient-btn:hover {
+  background: #1f2937;
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+/* Çok Renkli Palet Düğmeleri */
+.color-swatch-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.color-swatch-btn.active {
+  border-color: #ffffff;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+/* Modal Arka Plan & Pencere */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-window {
+  background: #0b1120;
+  border: 1px solid #243048;
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-col;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  animation: modalIn 0.2s ease-out forwards;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Yazdırma Modu (Print CSS) */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, footer, nav, .no-print, #tab-calculator, #tab-fleet, #tab-workshop {
+    display: none !important;
+  }
+  #tab-quote {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .printable-area {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

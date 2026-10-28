@@ -1,0 +1,19 @@
+# Sistem ve Geçici Dosyalar
+*.tmp
+*.log
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Test ve hata ayıklama çıktıları
+test_debug.html
+autotest*.html
+edge_*.log
+
+# Kurulum sonrası yerel yapılandırma
+initial_config.json
+
+# IDE / Editör
+.vs/
+.idea/
+.vscode/
